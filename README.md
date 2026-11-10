@@ -56,11 +56,20 @@ python3 guard.py --mandate mandate.json --intent intent.json --context context.j
 PYTHONPATH=. python3 -m unittest discover -s tests -v
 ```
 
-## 边界
+CI（GitHub Actions）在每次 push 到 `master` 与每个 PR 上跑这 12 个单测，并用固定在复现 commit `e1ea56d` 的 AP2 SDK 跑 `repro/` 下的两个脚本。
 
-- 这是「授权判定」的最小实现，不包含签名/凭证验证（那部分需要 AP2/ACT 的 VC 链路）；
-- 不连接真实支付网络；不构成支付建议；
-- 目标是可审计、可复现、可嵌入 CI 的检查器，而不是完整协议栈。
+## 0.1 边界与不支持场景
+
+当前实现只做「约束是否被现有证据支持」的判定，不做协议栈的其余部分。以下明确不支持：
+
+- **不验签、不验证凭证**：没有 JWT / SD-JWT / VC 解析，也没有信任锚、issuer 校验或密钥管理。因此本检查器无法证明 mandate 由谁签发、是否被篡改——它假设调用方传入的 mandate 与上下文已可信。
+- **不是协议实现**：不解析完整 AP2 mandate，只读取 `constraints` 及少数字段；不依赖 AP2 SDK，也不做协议版本协商。
+- **约束语义有限**：只覆盖 `KNOWN_PAYMENT_CONSTRAINTS` 里的 7 类，未知类型一律 `deny`。已有类型的实现也是最小语义，例如 `payment.agent_recurrence` 只比较 `total_uses` 计数、不看时间窗口；`payment.reference` 只比较 `transaction_id`。
+- **不持久化状态**：预算累计 `total_amount_cents`、使用次数 `total_uses` 都由调用方提供，检查器不读写账本。上下文不可信时，结论同样不可信。
+- **不换算金额**：金额只收整数最小单位（分），不做浮点、字符串或汇率换算；币种只按 3 字母字符串比较，不校验 ISO 4217 有效性。
+- **时间只比时间戳**：带时区偏移的 ISO 8601 才精确；不带时区的字符串按运行环境本地时区解释。
+- **不连支付网络**：不发起支付、不生成授权凭证、不撤销任何东西；输出只是可审计的检查结论，不构成支付建议。
+- **路线图之外**：ACT/APASS 的 ISR/IAC、MCP 工具、`act-guard lint`、证据链哈希都尚未实现。
 
 ## 路线图
 
