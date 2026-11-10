@@ -56,7 +56,7 @@ python3 guard.py --mandate mandate.json --intent intent.json --context context.j
 PYTHONPATH=. python3 -m unittest discover -s tests -v
 ```
 
-CI（GitHub Actions）在每次 push / PR 上跑这 12 个单测，并用固定在复现 commit `e1ea56d` 的 AP2 SDK 跑 `repro/` 下的两个脚本。
+CI（GitHub Actions）在每次 push 到 `master` 与每个 PR 上跑这 12 个单测，并用固定在复现 commit `e1ea56d` 的 AP2 SDK 跑 `repro/` 下的两个脚本。
 
 ## 0.1 边界与不支持场景
 
